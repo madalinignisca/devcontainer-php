@@ -1,24 +1,24 @@
-FROM ubuntu:20.04
+FROM debian:10
 
 ARG USERNAME=developer
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 ARG DEBIAN_FRONTEND=noninteractive
-ARG DISTRO=focal
 ARG NODE_VERSION=14
 ARG PHP_VERSION=7.4
 
 ENV MC_HOST_local=http://minio:minio123@minio:9000
 
 LABEL maintainer="Madalin Ignisca"
-LABEL version="3.x"
+LABEL version="4.x"
 LABEL description="Development environment for the joy and pleasure of web developers"
 LABEL repo="https://github.com/madalinignisca/devcontainers"
 
 ADD unminimize /tmp/unminimize
 ADD https://getcomposer.org/composer-stable.phar /usr/local/bin/composer
 ADD https://dl.min.io/client/mc/release/linux-amd64/mc /usr/local/bin/minio
-ADD https://deb.nodesource.com/gpgkey/nodesource.gpg.key /tmp/nodesource.gpg.key
+ADD https://deb.nodesource.com/gpgkey/nodesource.gpg.key /etc/apt/trusted.gpg.d/nodesource.gpg
+ADD https://packages.sury.org/php/apt.gpg /etc/apt/trusted.gpg.d/php.gpg
 
 RUN chmod 700 /tmp/unminimize \
     && /tmp/unminimize
@@ -29,12 +29,9 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
 RUN apt-get update \
     && apt-get upgrade --no-install-recommends -y \
     && apt-get install --no-install-recommends -y \
-      gnupg \
-      software-properties-common \
-    && apt-key add /tmp/nodesource.gpg.key \
-    && rm /tmp/nodesource.gpg.key \
-    && echo "deb https://deb.nodesource.com/node_${NODE_VERSION}.x $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list \
-    && LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php
+      gnupg apt-transport-https lsb-release ca-certificates curl \
+    && echo "deb https://deb.nodesource.com/node_${NODE_VERSION}.x $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
 
 RUN apt-get install --no-install-recommends -y \
       bash-completion \
